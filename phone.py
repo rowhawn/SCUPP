@@ -37,8 +37,10 @@ class Menu:
 
 		
 submenu1 = Menu("first submenu", "do the first action", [None, None, None, None, None, None, None, None, None, None])
-currMenu = Menu("main menu", "hear the main menu", [submenu1, None, None, None, None, None, None, None, None, None]) 
+submenu2 = Menu("second submenu", "do some other action", [None, None, None, None, None, None, None, None, None, None])
+currMenu = Menu("main menu", "hear the main menu", [submenu1, submenu2, None, None, None, None, None, None, None, None]) 
 submenu1.submenus[9] = currMenu
+submenu2.submenus[9] = currMenu
 
 while 1:
 	currMenu.readMenu()
