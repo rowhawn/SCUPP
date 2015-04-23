@@ -67,31 +67,31 @@ class Menu:
 def construct_menu_from_directory(menuDir, menuName, prevMenu):
 	submenuDirs = [d for d in os.listdir(menuDir) if os.path.isdir(os.path.join(menuDir, d))]
 	submenus = [None, None, None, None, None, None, None, None, None, prevMenu]
-	menu = Menu(menuName, menuDir + "/action.wav", menuDir + "/menu.wav", submenus)
+	menu = Menu(menuName, menuDir + os.sep + "action.wav", menuDir + os.sep + "menu.wav", submenus)
 	for submenuDir in submenuDirs:
 		if submenuDir.startswith("1"):
-			submenus[0] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[0] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("2"):
-			submenus[1] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[1] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("3"):
-			submenus[2] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[2] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("4"):
-			submenus[3] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[3] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("5"):
-			submenus[4] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[4] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("6"):
-			submenus[5] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[5] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("7"):
-			submenus[6] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[6] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("8"):
-			submenus[7] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[7] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 		elif submenuDir.startswith("9"):
-			submenus[8] = construct_menu_from_directory(menuDir + "/" + submenuDir, submenuDir[4:], menu)
+			submenus[8] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
 	return menu
 
-audioDir = os.getcwd() + "/resources/audio/"
+audioDir = os.getcwd() + os.sep + "resources" + os.sep + "audio"
 os.chdir(audioDir)
-menuDir = audioDir + "/1 - Main Menu"
+menuDir = audioDir + os.sep + "1 - Main Menu"
 currMenu = construct_menu_from_directory(menuDir, "Main Menu", None)
 
 #pygame.mixer.init()
