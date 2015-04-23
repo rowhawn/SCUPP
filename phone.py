@@ -3,13 +3,35 @@ import os
 import glob
 
 class Menu:
-	def __init__(self, menuId, actionMessage, menuMessage, submenus = []):
-		self.menuId = menuId;
-		self.actionMessage = actionMessage
-		self.menuMessage = menuMessage
-		self.submenus = submenus
+	def __init__(self, menuDir, prevMenu):
+		self.menuId = menuDir.split(os.sep)[-1][4:]
+		submenuDirs = [d for d in os.listdir(menuDir) if os.path.isdir(os.path.join(menuDir, d))]
+		self.submenus = [None, None, None, None, None, None, None, None, None, prevMenu]
+		self.actionMessage = menuDir + os.sep + "action.wav"
+		#self.actionMessage = pygame.mixer.Sound(menuDir + os.sep + "action.wav")
+		self.menuMessage = menuDir + os.sep + "menu.wav"
+		#self.menuMessage = pygame.mixer.Sound(menuDir + os.sep + "menu.wav")
+		for submenuDir in submenuDirs:
+			if submenuDir.startswith("1"):
+				self.submenus[0] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("2"):
+				self.submenus[1] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("3"):
+				self.submenus[2] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("4"):
+				self.submenus[3] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("5"):
+				self.submenus[4] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("6"):
+				self.submenus[5] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("7"):
+				self.submenus[6] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("8"):
+				self.submenus[7] = Menu(menuDir + os.sep + submenuDir, self)
+			elif submenuDir.startswith("9"):
+				self.submenus[8] = Menu(menuDir + os.sep + submenuDir, self)
 
-	def readMenu(self):
+	def read_menu(self):
 		print("read menuMessage for " + self.menuId)
 		print(self.menuMessage)
 		#self.menuMessage.play()
@@ -64,35 +86,10 @@ class Menu:
 			#clips['press0'].play()
 			#self.submenus[9].actionMessage.play()
 
-def construct_menu_from_directory(menuDir, menuName, prevMenu):
-	submenuDirs = [d for d in os.listdir(menuDir) if os.path.isdir(os.path.join(menuDir, d))]
-	submenus = [None, None, None, None, None, None, None, None, None, prevMenu]
-	menu = Menu(menuName, menuDir + os.sep + "action.wav", menuDir + os.sep + "menu.wav", submenus)
-	for submenuDir in submenuDirs:
-		if submenuDir.startswith("1"):
-			submenus[0] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("2"):
-			submenus[1] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("3"):
-			submenus[2] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("4"):
-			submenus[3] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("5"):
-			submenus[4] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("6"):
-			submenus[5] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("7"):
-			submenus[6] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("8"):
-			submenus[7] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-		elif submenuDir.startswith("9"):
-			submenus[8] = construct_menu_from_directory(menuDir + os.sep + submenuDir, submenuDir[4:], menu)
-	return menu
-
 audioDir = os.getcwd() + os.sep + "resources" + os.sep + "audio"
 os.chdir(audioDir)
 menuDir = audioDir + os.sep + "1 - Main Menu"
-currMenu = construct_menu_from_directory(menuDir, "Main Menu", None)
+currMenu = Menu(menuDir, None)
 
 #pygame.mixer.init()
 #clips = {}
@@ -100,7 +97,7 @@ currMenu = construct_menu_from_directory(menuDir, "Main Menu", None)
 #	clips[filename[:-4]] = pygame.mixer.Sound(filename)
 
 while 1:
-	currMenu.readMenu()
+	currMenu.read_menu()
 	print('\n')
 	userInput = input()
 	if (userInput == '1'):
