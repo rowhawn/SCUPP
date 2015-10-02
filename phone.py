@@ -1,9 +1,12 @@
 import pygame
+from pygame.mixer import Sound, get_init, pre_init
 import os
 import glob
 from threading import Thread
+from note import Note
 import time
 from queue import Queue
+from matrix_keypad import RPi_GPIO as keypad_GPIO
 
 class Menu:
 	def __init__(self, menuDir, prevMenu):
@@ -54,6 +57,19 @@ class Menu:
 					break
 				audioChannel.queue(submenu.actionMessage)
 
+kp = keypad_GPIO.keypad()
+pre_init(44100, -16, 1, 1024)
+pygame.init()
+row1_tone = Note(697)
+row2_tone = Note(770)
+row3_tone = Note(852)
+row4_tone = Note(941)
+col1_tone = Note(1209)
+col2_tone = Note(1336)
+col3_tone = Note(1477)
+row1_tone.play(-1)
+row1_tone.stop()
+
 pygame.mixer.init()
 audioChannel = pygame.mixer.Channel(0)
 
@@ -67,98 +83,142 @@ menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'],
 menuDir = audioDir + os.sep + "1 - Main Menu"
 currMenu = Menu(menuDir, None)
 
-while 1:
-	stopQueue = Queue()
-	readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
-	readMenuThread.start()
-	print('\n')
-	userInput = input()
-	if (userInput == '1'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+def key_down(key):
+	audioChannel.stop()
+	stopQueue.put("stop")
+	if key == 1:
+		row1_tone.play(-1)
+		col1_tone.play(-1)
+	elif key == 2:
+		row1_tone.play(-1)
+		col2_tone.play(-1)
+	elif key == 3:
+		row1_tone.play(-1)
+		col3_tone.play(-1)
+	elif key == 4:
+		row2_tone.play(-1)
+		col1_tone.play(-1)
+	elif key == 5:
+		row2_tone.play(-1)
+		col2_tone.play(-1)
+	elif key == 6:
+		row2_tone.play(-1)
+		col3_tone.play(-1)
+	elif key == 7:
+		row3_tone.play(-1)
+		col1_tone.play(-1)
+	elif key == 8:
+		row3_tone.play(-1)
+		col2_tone.play(-1)
+	elif key == 9:
+		row3_tone.play(-1)
+		col3_tone.play(-1)
+	elif key == '*':
+		row4_tone.play(-1)
+		col1_tone.play(-1)
+	elif key == 0:
+		row4_tone.play(-1)
+		col2_tone.play(-1)
+	elif key == '#':
+		row4_tone.play(-1)
+		col3_tone.play(-1)
+
+def key_up(key):
+	global currMenu
+	row1_tone.stop()
+	row2_tone.stop()
+	row3_tone.stop()
+	row4_tone.stop()
+	col1_tone.stop()
+	col2_tone.stop()
+	col3_tone.stop()
+	print(str(key) + " was pressed")
+	if (key == 1):
 		if (currMenu.submenus[0] is not None):
 			currMenu = currMenu.submenus[0]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '2'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 2):
 		if(currMenu.submenus[1] is not None):
 			currMenu = currMenu.submenus[1]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '3'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 3):
 		if(currMenu.submenus[2] is not None):
 			currMenu = currMenu.submenus[2]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '4'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 4):
 		if(currMenu.submenus[3] is not None):
 			currMenu = currMenu.submenus[3]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '5'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 5):
 		if(currMenu.submenus[4] is not None):
 			currMenu = currMenu.submenus[4]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '6'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 6):
 		if(currMenu.submenus[5] is not None):
 			currMenu = currMenu.submenus[5]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '7'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 7):
 		if(currMenu.submenus[6] is not None):
 			currMenu = currMenu.submenus[6]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '8'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 8):
 		if(currMenu.submenus[7] is not None):
 			currMenu = currMenu.submenus[7]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '9'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 9):
 		if(currMenu.submenus[8] is not None):
 			currMenu = currMenu.submenus[8]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '0'):
-		audioChannel.stop()
-		stopQueue.put("stop")
+	elif (key == 0):
 		if(currMenu.submenus[9] is not None):
 			currMenu = currMenu.submenus[9]
 		else:
 			print("No option for that number")
 			audioChannel.play(clips['nooption'])
-	elif (userInput == '*'):
+	elif (key == '*'):
 		print("you pressed something else!")
-	elif (userInput == '#'):
+	elif (key == '#'):
 		print("you pressed something else!")
 	elif (userInput == 'quit'):
 		quit()
 	else:
 		print("invalid input")
+	
 
+
+lastKeyPressed = None
+keyPressed = None
+while 1:
+	stopQueue = Queue()
+	readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
+	readMenuThread.start()
+	print('\n')
+	
+	while 1:
+		keyPressed = kp.getKey()
+		if lastKeyPressed == None and keyPressed != None:
+			key_down(keyPressed)
+		elif lastKeyPressed != None and keyPressed == None:
+			key_up(lastKeyPressed)
+			lastKeyPressed = keyPressed
+			break
+		lastKeyPressed = keyPressed
+		time.sleep(0.05)
