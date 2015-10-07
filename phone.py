@@ -1,12 +1,13 @@
-import pygame
-from pygame.mixer import Sound, get_init, pre_init
 import os
 import glob
+import time
+import pygame
+from enum import Enum
+from queue import Queue
 from threading import Thread
 from note import Note
-import time
-from queue import Queue
 from matrix_keypad import RPi_GPIO as keypad_GPIO
+from pygame.mixer import Sound, get_init, pre_init
 
 class Menu:
 	def __init__(self, menuDir, prevMenu):
@@ -57,6 +58,11 @@ class Menu:
 					break
 				audioChannel.queue(submenu.actionMessage)
 
+class Status(Enum):
+	OFFHOOK = 1
+	DIALING = 2
+	CONNECTED = 3
+				
 kp = keypad_GPIO.keypad()
 pre_init(44100, -16, 1, 1024)
 pygame.init()
@@ -67,8 +73,13 @@ row4_tone = Note(941)
 col1_tone = Note(1209)
 col2_tone = Note(1336)
 col3_tone = Note(1477)
+dial_tone1 = Note(350)
+dial_tone2 = Note(440)
 row1_tone.play(-1)
 row1_tone.stop()
+
+registered_numbers = [[4, 1, 0, 5, 5, 1, 1, 4, 0, 8], [4, 1, 0, 7, 8, 3, 8, 1, 0, 0]]
+numbers_dialed = []
 
 pygame.mixer.init()
 audioChannel = pygame.mixer.Channel(0)
@@ -82,10 +93,18 @@ menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'],
 
 menuDir = audioDir + os.sep + "1 - Main Menu"
 currMenu = Menu(menuDir, None)
+phone_status = Status.OFFHOOK
 
 def key_down(key):
-	audioChannel.stop()
-	stopQueue.put("stop")
+	global phone_status
+	if phone_status == Status.CONNECTED:
+		audioChannel.stop()
+		stopQueue.put("stop")
+	elif phone_status == Status.OFFHOOK:
+		dial_tone1.stop()
+		dial_tone2.stop()
+		phone_status = Status.DIALING
+		
 	if key == 1:
 		row1_tone.play(-1)
 		col1_tone.play(-1)
@@ -125,6 +144,7 @@ def key_down(key):
 
 def key_up(key):
 	global currMenu
+	global phone_status
 	row1_tone.stop()
 	row2_tone.stop()
 	row3_tone.stop()
@@ -133,85 +153,107 @@ def key_up(key):
 	col2_tone.stop()
 	col3_tone.stop()
 	print(str(key) + " was pressed")
-	if (key == 1):
-		if (currMenu.submenus[0] is not None):
-			currMenu = currMenu.submenus[0]
+	if phone_status == Status.DIALING:
+		numbers_dialed.append(key)
+		time.sleep(0.1)
+	elif phone_status == Status.CONNECTED:
+		time.sleep(0.5)		       
+		if (key == 1):
+			if (currMenu.submenus[0] is not None):
+				currMenu = currMenu.submenus[0]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 2):
+			if(currMenu.submenus[1] is not None):
+				currMenu = currMenu.submenus[1]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 3):
+			if(currMenu.submenus[2] is not None):
+				currMenu = currMenu.submenus[2]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 4):
+			if(currMenu.submenus[3] is not None):
+				currMenu = currMenu.submenus[3]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 5):
+			if(currMenu.submenus[4] is not None):
+				currMenu = currMenu.submenus[4]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 6):
+			if(currMenu.submenus[5] is not None):
+				currMenu = currMenu.submenus[5]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 7):
+			if(currMenu.submenus[6] is not None):
+				currMenu = currMenu.submenus[6]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 8):
+			if(currMenu.submenus[7] is not None):
+				currMenu = currMenu.submenus[7]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 9):
+			if(currMenu.submenus[8] is not None):
+				currMenu = currMenu.submenus[8]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == 0):
+			if(currMenu.submenus[9] is not None):
+				currMenu = currMenu.submenus[9]
+			else:
+				print("No option for that number")
+				audioChannel.play(clips['nooption'])
+		elif (key == '*'):
+			print("you pressed something else!")
+		elif (key == '#'):
+			print("you pressed something else!")
+		elif (userInput == 'quit'):
+			quit()
 		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 2):
-		if(currMenu.submenus[1] is not None):
-			currMenu = currMenu.submenus[1]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 3):
-		if(currMenu.submenus[2] is not None):
-			currMenu = currMenu.submenus[2]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 4):
-		if(currMenu.submenus[3] is not None):
-			currMenu = currMenu.submenus[3]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 5):
-		if(currMenu.submenus[4] is not None):
-			currMenu = currMenu.submenus[4]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 6):
-		if(currMenu.submenus[5] is not None):
-			currMenu = currMenu.submenus[5]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 7):
-		if(currMenu.submenus[6] is not None):
-			currMenu = currMenu.submenus[6]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 8):
-		if(currMenu.submenus[7] is not None):
-			currMenu = currMenu.submenus[7]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 9):
-		if(currMenu.submenus[8] is not None):
-			currMenu = currMenu.submenus[8]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == 0):
-		if(currMenu.submenus[9] is not None):
-			currMenu = currMenu.submenus[9]
-		else:
-			print("No option for that number")
-			audioChannel.play(clips['nooption'])
-	elif (key == '*'):
-		print("you pressed something else!")
-	elif (key == '#'):
-		print("you pressed something else!")
-	elif (userInput == 'quit'):
-		quit()
-	else:
-		print("invalid input")
-	
+			print("invalid input")
+			
 
 
 lastKeyPressed = None
 keyPressed = None
 while 1:
-	stopQueue = Queue()
-	readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
-	readMenuThread.start()
-	print('\n')
-	
+	if phone_status == Status.OFFHOOK:
+		dial_tone1.play(-1)
+		dial_tone2.play(-1)
+	elif phone_status == Status.DIALING:
+		if len(numbers_dialed) == 10:
+			if numbers_dialed in registered_numbers:
+				print("connected!")
+				phone_status = Status.CONNECTED
+				time.sleep(1)
+			else:
+				print("No such number exists!")
+				phone_status = Status.OFFHOOK
+				numbers_dialed = []
+				time.sleep(1)
+				continue
+
+	if phone_status == Status.CONNECTED:	      
+		stopQueue = Queue()
+		readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
+		readMenuThread.start()
+		print('\n')
+		
 	while 1:
 		keyPressed = kp.getKey()
 		if lastKeyPressed == None and keyPressed != None:
