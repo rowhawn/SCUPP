@@ -83,6 +83,7 @@ numbers_dialed = []
 
 pygame.mixer.init()
 audioChannel = pygame.mixer.Channel(0)
+audioChannel.set_volume(1.0)
 
 audioDir = os.getcwd() + os.sep + "resources" + os.sep + "audio"
 os.chdir(audioDir)
@@ -251,6 +252,8 @@ while 1:
 	if phone_status == Status.CONNECTED:	      
 		stopQueue = Queue()
 		readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
+		while audioChannel.get_busy():
+			time.sleep(0.1)
 		readMenuThread.start()
 		print('\n')
 		
