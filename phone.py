@@ -6,6 +6,7 @@ from enum import Enum
 from queue import Queue
 from threading import Thread
 from note import Note
+import RPi.GPIO as GPIO
 from matrix_keypad import RPi_GPIO as keypad_GPIO
 from pygame.mixer import Sound, get_init, pre_init
 
@@ -62,6 +63,11 @@ class Status(Enum):
 	OFFHOOK = 1
 	DIALING = 2
 	CONNECTED = 3
+	ONHOOK=4
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(14, GPIO.OUT)
+GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 				
 kp = keypad_GPIO.keypad()
 pre_init(44100, -16, 1, 1024)
@@ -84,6 +90,10 @@ numbers_dialed = []
 pygame.mixer.init()
 audioChannel = pygame.mixer.Channel(0)
 audioChannel.set_volume(1.0)
+toneChannel1 = pygame.mixer.Channel(1)
+toneChannel1.set_volume(1.0)
+toneChannel2 = pygame.mixer.Channel(2)
+toneChannel2.set_volume(1.0)
 
 audioDir = os.getcwd() + os.sep + "resources" + os.sep + "audio"
 os.chdir(audioDir)
@@ -94,7 +104,7 @@ menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'],
 
 menuDir = audioDir + os.sep + "1 - Main Menu"
 currMenu = Menu(menuDir, None)
-phone_status = Status.OFFHOOK
+phone_status = Status.ONHOOK
 
 def key_down(key):
 	global phone_status
@@ -102,57 +112,52 @@ def key_down(key):
 		audioChannel.stop()
 		stopQueue.put("stop")
 	elif phone_status == Status.OFFHOOK:
-		dial_tone1.stop()
-		dial_tone2.stop()
+		toneChannel1.stop()
+		toneChannel2.stop()
 		phone_status = Status.DIALING
 		
 	if key == 1:
-		row1_tone.play(-1)
-		col1_tone.play(-1)
+		toneChannel1.play(row1_tone, -1)
+		toneChannel2.play(col1_tone, -1)
 	elif key == 2:
-		row1_tone.play(-1)
-		col2_tone.play(-1)
+		toneChannel1.play(row1_tone, -1)
+		toneChannel2.play(col2_tone, -1)
 	elif key == 3:
-		row1_tone.play(-1)
-		col3_tone.play(-1)
+		toneChannel1.play(row1_tone, -1)
+		toneChannel2.play(col3_tone, -1)
 	elif key == 4:
-		row2_tone.play(-1)
-		col1_tone.play(-1)
+		toneChannel1.play(row2_tone, -1)
+		toneChannel2.play(col1_tone, -1)
 	elif key == 5:
-		row2_tone.play(-1)
-		col2_tone.play(-1)
+		toneChannel1.play(row2_tone, -1)
+		toneChannel2.play(col2_tone, -1)
 	elif key == 6:
-		row2_tone.play(-1)
-		col3_tone.play(-1)
+		toneChannel1.play(row2_tone, -1)
+		toneChannel2.play(col3_tone, -1)
 	elif key == 7:
-		row3_tone.play(-1)
-		col1_tone.play(-1)
+		toneChannel1.play(row3_tone, -1)
+		toneChannel2.play(col1_tone, -1)
 	elif key == 8:
-		row3_tone.play(-1)
-		col2_tone.play(-1)
+		toneChannel1.play(row3_tone, -1)
+		toneChannel2.play(col2_tone, -1)
 	elif key == 9:
-		row3_tone.play(-1)
-		col3_tone.play(-1)
+		toneChannel1.play(row3_tone, -1)
+		toneChannel2.play(col3_tone, -1)
 	elif key == '*':
-		row4_tone.play(-1)
-		col1_tone.play(-1)
+		toneChannel1.play(row4_tone, -1)
+		toneChannel2.play(col1_tone, -1)
 	elif key == 0:
-		row4_tone.play(-1)
-		col2_tone.play(-1)
+		toneChannel1.play(row4_tone, -1)
+		toneChannel2.play(col2_tone, -1)
 	elif key == '#':
-		row4_tone.play(-1)
-		col3_tone.play(-1)
+		toneChannel1.play(row4_tone, -1)
+		toneChannel2.play(col3_tone, -1)
 
 def key_up(key):
 	global currMenu
 	global phone_status
-	row1_tone.stop()
-	row2_tone.stop()
-	row3_tone.stop()
-	row4_tone.stop()
-	col1_tone.stop()
-	col2_tone.stop()
-	col3_tone.stop()
+	toneChannel1.stop()
+	toneChannel2.stop()
 	print(str(key) + " was pressed")
 	if phone_status == Status.DIALING:
 		numbers_dialed.append(key)
@@ -228,14 +233,22 @@ def key_up(key):
 		else:
 			print("invalid input")
 			
-
-
+lastIsOnHook = True
+isOnHook = True
 lastKeyPressed = None
 keyPressed = None
 while 1:
-	if phone_status == Status.OFFHOOK:
-		dial_tone1.play(-1)
-		dial_tone2.play(-1)
+	if phone_status == Status.ONHOOK:
+		if audioChannel.get_busy():
+			audioChannel.stop()
+			stopQueue.put("stop")
+		if toneChannel1.get_busy():
+			toneChannel1.stop()
+		if toneChannel2.get_busy():
+			toneChannel2.stop()				   
+	elif phone_status == Status.OFFHOOK:
+		toneChannel1.play(dial_tone1, -1)
+		toneChannel2.play(dial_tone2, -1)
 	elif phone_status == Status.DIALING:
 		if len(numbers_dialed) == 10:
 			if numbers_dialed in registered_numbers:
@@ -258,12 +271,23 @@ while 1:
 		print('\n')
 		
 	while 1:
-		keyPressed = kp.getKey()
-		if lastKeyPressed == None and keyPressed != None:
-			key_down(keyPressed)
-		elif lastKeyPressed != None and keyPressed == None:
-			key_up(lastKeyPressed)
-			lastKeyPressed = keyPressed
+		GPIO.output(14, True)
+		lastIsOnHook = isOnHook
+		isOnHook = GPIO.input(15)
+		if isOnHook and not lastIsOnHook:
+			phone_status = Status.ONHOOK
 			break
-		lastKeyPressed = keyPressed
+		elif not isOnHook and lastIsOnHook:
+			phone_status = Status.OFFHOOK
+			numbers_dialed = []
+			break
+		if phone_status != Status.ONHOOK:
+			keyPressed = kp.getKey()
+			if lastKeyPressed == None and keyPressed != None:
+				key_down(keyPressed)
+			elif lastKeyPressed != None and keyPressed == None:
+				key_up(lastKeyPressed)
+				lastKeyPressed = keyPressed
+				break
+			lastKeyPressed = keyPressed
 		time.sleep(0.05)
