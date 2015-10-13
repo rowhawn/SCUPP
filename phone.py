@@ -15,9 +15,7 @@ class Menu:
 		self.menuId = menuDir.split(os.sep)[-1][4:]
 		submenuDirs = [d for d in os.listdir(menuDir) if os.path.isdir(os.path.join(menuDir, d))]
 		self.submenus = [None, None, None, None, None, None, None, None, None, prevMenu]
-		#self.actionMessage = menuDir + os.sep + "action.wav"
 		self.actionMessage = pygame.mixer.Sound(menuDir + os.sep + "action.wav")
-		#self.menuMessage = menuDir + os.sep + "menu.wav"
 		self.menuMessage = pygame.mixer.Sound(menuDir + os.sep + "menu.wav")
 		for submenuDir in submenuDirs:
 			if submenuDir.startswith("1"):
@@ -81,11 +79,6 @@ col2_tone = Note(1336)
 col3_tone = Note(1477)
 dial_tone1 = Note(350)
 dial_tone2 = Note(440)
-row1_tone.play(-1)
-row1_tone.stop()
-
-registered_numbers = [[4, 1, 0, 5, 5, 1, 1, 4, 0, 8], [4, 1, 0, 7, 8, 3, 8, 1, 0, 0]]
-numbers_dialed = []
 
 pygame.mixer.init()
 audioChannel = pygame.mixer.Channel(0)
@@ -97,14 +90,14 @@ toneChannel2.set_volume(1.0)
 
 audioDir = os.getcwd() + os.sep + "resources" + os.sep + "audio"
 os.chdir(audioDir)
-clips = {}
-for filename in glob.glob('*.wav'):
-	clips[filename[:-4]] = pygame.mixer.Sound(filename)
-menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'], clips['press5'], clips['press6'], clips['press7'], clips['press8'], clips['press9'], clips['press0']]
 
-menuDir = audioDir + os.sep + "1 - Main Menu"
-currMenu = Menu(menuDir, None)
+numbers_dialed = ''
+clips = {}
 phone_status = Status.ONHOOK
+lastIsOnHook = True
+isOnHook = True
+lastKeyPressed = None
+keyPressed = None
 
 def key_down(key):
 	global phone_status
@@ -156,11 +149,12 @@ def key_down(key):
 def key_up(key):
 	global currMenu
 	global phone_status
+	global numbers_dialed
 	toneChannel1.stop()
 	toneChannel2.stop()
 	print(str(key) + " was pressed")
 	if phone_status == Status.DIALING:
-		numbers_dialed.append(key)
+		numbers_dialed += str(key)
 		time.sleep(0.1)
 	elif phone_status == Status.CONNECTED:
 		time.sleep(0.5)		       
@@ -225,69 +219,74 @@ def key_up(key):
 				print("No option for that number")
 				audioChannel.play(clips['nooption'])
 		elif (key == '*'):
-			print("you pressed something else!")
+			print("No option for that key")
+			audioChannel.play(clips['nooption'])
 		elif (key == '#'):
-			print("you pressed something else!")
-		elif (userInput == 'quit'):
-			quit()
+			print("No option for that key")
+			audioChannel.play(clips['nooption'])
 		else:
 			print("invalid input")
-			
-lastIsOnHook = True
-isOnHook = True
-lastKeyPressed = None
-keyPressed = None
-while 1:
-	if phone_status == Status.ONHOOK:
-		if audioChannel.get_busy():
-			audioChannel.stop()
-			stopQueue.put("stop")
-		if toneChannel1.get_busy():
-			toneChannel1.stop()
-		if toneChannel2.get_busy():
-			toneChannel2.stop()				   
-	elif phone_status == Status.OFFHOOK:
-		toneChannel1.play(dial_tone1, -1)
-		toneChannel2.play(dial_tone2, -1)
-	elif phone_status == Status.DIALING:
-		if len(numbers_dialed) == 10:
-			if numbers_dialed in registered_numbers:
-				print("connected!")
-				phone_status = Status.CONNECTED
-				time.sleep(1)
-			else:
-				print("No such number exists!")
-				phone_status = Status.OFFHOOK
-				numbers_dialed = []
-				time.sleep(1)
+try:			
+	while 1:
+		if phone_status == Status.ONHOOK:
+			if audioChannel.get_busy():
+				audioChannel.stop()
+				stopQueue.put("stop")
+			if toneChannel1.get_busy():
+				toneChannel1.stop()
+			if toneChannel2.get_busy():
+				toneChannel2.stop()   
+		elif phone_status == Status.OFFHOOK:
+			toneChannel1.play(dial_tone1, -1)
+			toneChannel2.play(dial_tone2, -1)
+		elif phone_status == Status.DIALING:
+			if len(numbers_dialed) == 10:
+				os.chdir(audioDir)
+				if numbers_dialed in list(glob.glob('[0-9]10*')):
+					print("connected!")
+					phone_status = Status.CONNECTED
+					phoneNumDir = audioDir + os.sep + numbers_dialed
+					os.chdir(phoneNumDir)
+					for filename in glob.glob('*.wav'):
+						clips[filename[:-4]] = pygame.mixer.Sound(filename)
+					menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'], clips['press5'], clips['press6'], clips['press7'], clips['press8'], clips['press9'], clips['press0']]
+					menuDir = phoneNumDir + os.sep + "1 - Main Menu"
+					currMenu = Menu(menuDir, None)
+				else:
+					print("No such number exists!")
+					phone_status = Status.OFFHOOK
+					numbers_dialed = ''
+                                time.sleep(1)
 				continue
 
-	if phone_status == Status.CONNECTED:	      
-		stopQueue = Queue()
-		readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
-		while audioChannel.get_busy():
-			time.sleep(0.1)
-		readMenuThread.start()
-		print('\n')
-		
-	while 1:
-		GPIO.output(14, True)
-		lastIsOnHook = isOnHook
-		isOnHook = GPIO.input(15)
-		if isOnHook and not lastIsOnHook:
-			phone_status = Status.ONHOOK
-			break
-		elif not isOnHook and lastIsOnHook:
-			phone_status = Status.OFFHOOK
-			numbers_dialed = []
-			break
-		if phone_status != Status.ONHOOK:
-			keyPressed = kp.getKey()
-			if lastKeyPressed == None and keyPressed != None:
-				key_down(keyPressed)
-			elif lastKeyPressed != None and keyPressed == None:
-				key_up(lastKeyPressed)
-				lastKeyPressed = keyPressed
+		if phone_status == Status.CONNECTED:	      
+			stopQueue = Queue()
+			readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue,))
+			while audioChannel.get_busy():
+				time.sleep(0.1)
+			readMenuThread.start()
+			print('\n')
+
+		while 1:
+			GPIO.output(14, True)
+			lastIsOnHook = isOnHook
+			isOnHook = GPIO.input(15)
+			if isOnHook and not lastIsOnHook:
+				phone_status = Status.ONHOOK
 				break
-			lastKeyPressed = keyPressed
-		time.sleep(0.05)
+			elif not isOnHook and lastIsOnHook:
+				phone_status = Status.OFFHOOK
+				numbers_dialed = ''
+				break
+			if phone_status != Status.ONHOOK:
+				keyPressed = kp.getKey()
+				if lastKeyPressed == None and keyPressed != None:
+					key_down(keyPressed)
+				elif lastKeyPressed != None and keyPressed == None:
+					key_up(lastKeyPressed)
+					lastKeyPressed = keyPressed
+					break
+				lastKeyPressed = keyPressed
+			time.sleep(0.05)
+except KeyboardInterrupt:
+	GPIO.cleanup()
