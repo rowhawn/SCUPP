@@ -15,7 +15,7 @@ class Status(Enum):
 	OFFHOOK = 1
 	DIALING = 2
 	CONNECTED = 3
-	ONHOOK=4
+	ONHOOK = 4
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(14, GPIO.OUT)
@@ -201,11 +201,13 @@ try:
 					phone_status = Status.CONNECTED
 					phoneNumDir = audioDir + os.sep + numbers_dialed
 					os.chdir(phoneNumDir)
+					for filename in glob.glob('*.ogg'):
+						clips[filename[:-4]] = pygame.mixer.Sound(filename)
 					for filename in glob.glob('*.wav'):
 						clips[filename[:-4]] = pygame.mixer.Sound(filename)
 					menuPress = [clips['press1'], clips['press2'], clips['press3'], clips['press4'], clips['press5'], clips['press6'], clips['press7'], clips['press8'], clips['press9'], clips['press0']]
 					menuDir = phoneNumDir + os.sep + "1 - Main Menu"
-					currMenu = Menu(menuDir, None)
+					currMenu = Menu(menuDir, None, menuPress)
 				else:
 					print("No such number exists!")
 					phone_status = Status.OFFHOOK
@@ -215,7 +217,7 @@ try:
 
 		if phone_status == Status.CONNECTED:	      
 			stopQueue = Queue()
-			readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue, menuPress, audioChannel,))
+			readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue, audioChannel,))
 			while audioChannel.get_busy():
 				time.sleep(0.1)
 			readMenuThread.start()
@@ -243,4 +245,6 @@ try:
 				lastKeyPressed = keyPressed
 			time.sleep(0.05)
 except KeyboardInterrupt:
+	print('Quit from console, cleaning up GPIO')
+finally:
 	GPIO.cleanup()
