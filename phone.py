@@ -196,7 +196,7 @@ try:
 		elif phone_status == Status.DIALING:
 			if len(numbers_dialed) == 10:
 				os.chdir(audioDir)
-				if numbers_dialed in list(glob.glob('[0-9]10*')):
+				if numbers_dialed in list(glob.glob('[0-9]*')):
 					print("connected!")
 					phone_status = Status.CONNECTED
 					phoneNumDir = audioDir + os.sep + numbers_dialed
