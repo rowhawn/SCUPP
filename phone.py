@@ -23,6 +23,7 @@ GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 				
 kp = keypad_GPIO.keypad()
 pre_init(44100, -16, 1, 1024)
+print("about to initialize pygame")
 pygame.init()
 row1_tone = Note(697)
 row2_tone = Note(770)
