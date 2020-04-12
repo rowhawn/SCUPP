@@ -183,6 +183,7 @@ def key_up(key):
 			print("invalid input")
 try:
 	while True:
+		print("now inside real phone loop")
 		if phone_status == Status.ONHOOK:
 			if audioChannel.get_busy():
 				audioChannel.stop()
