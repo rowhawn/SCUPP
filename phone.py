@@ -181,7 +181,8 @@ def key_up(key):
 			audioChannel.play(clips['nooption'])
 		else:
 			print("invalid input")
-try:			
+try:
+	print("inside phone loop")
 	while 1:
 		if phone_status == Status.ONHOOK:
 			if audioChannel.get_busy():
