@@ -182,8 +182,7 @@ def key_up(key):
 		else:
 			print("invalid input")
 try:
-	print("inside phone loop")
-	while 1:
+	while True:
 		if phone_status == Status.ONHOOK:
 			if audioChannel.get_busy():
 				audioChannel.stop()
@@ -225,7 +224,7 @@ try:
 			readMenuThread.start()
 			print('\n')
 
-		while 1:
+		while True:
 			GPIO.output(14, True)
 			lastIsOnHook = isOnHook
 			isOnHook = GPIO.input(15)
