@@ -185,6 +185,7 @@ try:
 	while True:
 		print("now inside real phone loop")
 		if phone_status == Status.ONHOOK:
+			print("phone status is on hook")
 			if audioChannel.get_busy():
 				audioChannel.stop()
 				stopQueue.put("stop")
@@ -193,9 +194,11 @@ try:
 			if toneChannel2.get_busy():
 				toneChannel2.stop()   
 		elif phone_status == Status.OFFHOOK:
+			print("phone status is off hook")
 			toneChannel1.play(dial_tone1, -1)
 			toneChannel2.play(dial_tone2, -1)
 		elif phone_status == Status.DIALING:
+			print("phone status is dialing")
 			if len(numbers_dialed) == 10:
 				os.chdir(audioDir)
 				if numbers_dialed in list(glob.glob('[0-9]*')):
@@ -217,7 +220,8 @@ try:
 				time.sleep(1)
 				continue
 
-		if phone_status == Status.CONNECTED:	      
+		if phone_status == Status.CONNECTED:
+			print("phone status is connected to number")
 			stopQueue = Queue()
 			readMenuThread = Thread(target = currMenu.read_menu, args = (stopQueue, audioChannel,))
 			while audioChannel.get_busy():
